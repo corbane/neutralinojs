@@ -26,10 +26,10 @@
 
 using namespace std;
 using json = nlohmann::json;
-typedef json (*NativeMethod)(json);
+typedef json (*NativeMethod)(const json &);
 
 namespace router {
-    router::NativeMessage executeNativeMethod(router::NativeMessage request) {
+    router::NativeMessage executeNativeMethod(const router::NativeMessage &request) {
         string nativeMethodId = request.method;
         router::NativeMessage response;
         response.id = request.id;
@@ -144,7 +144,7 @@ namespace router {
         }
     }
 
-    router::Response getAsset(string path, string prependData) {
+    router::Response getAsset(string path, const string &prependData) {
         router::Response response;
         vector<string> split = helpers::split(path, '.');
         if(split.size() < 2) {

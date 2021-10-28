@@ -27,7 +27,7 @@ using namespace std;
 using json = nlohmann::json;
 
 namespace fs {
-    bool createDirectory(string path) {
+    bool createDirectory(const string &path) {
         #if defined(__linux__) || defined(__APPLE__) || defined(__FreeBSD__)
         return mkdir(path.c_str(), 0700) == 0;
         #elif defined(_WIN32)
@@ -35,7 +35,7 @@ namespace fs {
         #endif
     }
     
-    bool removeFile(string filename) {
+    bool removeFile(const string &filename) {
         #if defined(__linux__) || defined(__APPLE__) || defined(__FreeBSD__)
         return remove(filename.c_str()) == 0;
         #elif defined(_WIN32)
@@ -43,7 +43,7 @@ namespace fs {
         #endif
     }
     
-    string getDirectoryName(string filename){
+    string getDirectoryName(const string &filename){
         #if defined(__linux__) || defined(__APPLE__) || defined(__FreeBSD__)
         return dirname((char*)filename.c_str());
         #elif defined(_WIN32)
@@ -67,7 +67,7 @@ namespace fs {
         #endif
     }
     
-    string getFullPathFromRelative(string path) {
+    string getFullPathFromRelative(const string &path) {
         #if defined(__linux__)
         return realpath(path.c_str(), nullptr);
         #else
@@ -75,7 +75,7 @@ namespace fs {
         #endif
     }
     
-    fs::FileReaderResult readFile(string filename) {
+    fs::FileReaderResult readFile(const string &filename) {
         fs::FileReaderResult fileReaderResult;
         ifstream reader(filename.c_str(), ios::binary | ios::ate);
         if(!reader.is_open()) {
@@ -95,7 +95,7 @@ namespace fs {
         return fileReaderResult;
     }
 
-     bool writeFile(fs::FileWriterOptions fileWriterOptions) {
+     bool writeFile(const fs::FileWriterOptions &fileWriterOptions) {
         json output;
         ofstream writer(fileWriterOptions.filename);
         if(!writer.is_open())
@@ -105,7 +105,7 @@ namespace fs {
         return true;
     }
     
-    fs::FileStats getStats(string path) {
+    fs::FileStats getStats(const string &path) {
         fs::FileStats fileStats;
         #if defined(__linux__) || defined(__APPLE__) || defined(__FreeBSD__)
         struct stat statBuffer;
@@ -142,8 +142,12 @@ namespace fs {
     }
 
 namespace controllers {
-    json createDirectory(json input) {
+    json createDirectory(const json &input) {
         json output;
+        if(!input.contains("path")) {
+            output["error"] = helpers::makeMissingArgErrorPayload();
+            return output;
+        }
         string path = input["path"].get<string>();
         if(fs::createDirectory(path)) {
             output["success"] = true;
@@ -156,8 +160,12 @@ namespace controllers {
         return output;
     }
 
-    json removeDirectory(json input) {
+    json removeDirectory(const json &input) {
         json output;
+        if(!input.contains("path")) {
+            output["error"] = helpers::makeMissingArgErrorPayload();
+            return output;
+        }
         string path = input["path"].get<string>();
         #if defined(__linux__) || defined(__APPLE__) || defined(__FreeBSD__)
         if(rmdir(path.c_str()) == 0) {
@@ -174,8 +182,12 @@ namespace controllers {
         return output;
     }
 
-    json readFile(json input) {
+    json readFile(const json &input) {
         json output;
+        if(!input.contains("path")) {
+            output["error"] = helpers::makeMissingArgErrorPayload();
+            return output;
+        }
         fs::FileReaderResult fileReaderResult;
         fileReaderResult = fs::readFile(input["path"].get<string>());
         if(fileReaderResult.hasError) {
@@ -188,8 +200,12 @@ namespace controllers {
         return output;
     }
     
-    json readBinaryFile(json input) {
+    json readBinaryFile(const json &input) {
         json output;
+        if(!input.contains("path")) {
+            output["error"] = helpers::makeMissingArgErrorPayload();
+            return output;
+        }
         fs::FileReaderResult fileReaderResult;
         fileReaderResult = fs::readFile(input["path"].get<string>());
         if(fileReaderResult.hasError) {
@@ -202,8 +218,12 @@ namespace controllers {
         return output;
     }
 
-    json writeFile(json input) {
+    json writeFile(const json &input) {
         json output;
+        if(!input.contains("path") || !input.contains("data")) {
+            output["error"] = helpers::makeMissingArgErrorPayload();
+            return output;
+        }
         fs::FileWriterOptions fileWriterOptions;
         fileWriterOptions.filename = input["path"].get<string>();
         fileWriterOptions.data = input["data"].get<string>();
@@ -215,8 +235,12 @@ namespace controllers {
         return output;
     }
     
-    json writeBinaryFile(json input) {
+    json writeBinaryFile(const json &input) {
         json output;
+        if(!input.contains("path") || !input.contains("data")) {
+            output["error"] = helpers::makeMissingArgErrorPayload();
+            return output;
+        }
         fs::FileWriterOptions fileWriterOptions;
         fileWriterOptions.filename = input["path"].get<string>();
         fileWriterOptions.data = base64::from_base64(input["data"].get<string>());
@@ -228,8 +252,12 @@ namespace controllers {
         return output;
     }
 
-    json removeFile(json input) {
+    json removeFile(const json &input) {
         json output;
+        if(!input.contains("path")) {
+            output["error"] = helpers::makeMissingArgErrorPayload();
+            return output;
+        }
         string filename = input["path"].get<string>();
         if(fs::removeFile(filename)) {
             output["success"] = true;
@@ -242,8 +270,12 @@ namespace controllers {
         return output;
     }
 
-    json readDirectory(json input) {
+    json readDirectory(const json &input) {
         json output;
+        if(!input.contains("path")) {
+            output["error"] = helpers::makeMissingArgErrorPayload();
+            return output;
+        }
         string path = input["path"].get<string>();
         fs::FileStats fileStats = fs::getStats(path);
         if(fileStats.hasError) {
@@ -296,8 +328,12 @@ namespace controllers {
         return output;
     }
    
-    json copyFile(json input) {
+    json copyFile(const json &input) {
         json output;
+        if(!input.contains("source") || !input.contains("destination")) {
+            output["error"] = helpers::makeMissingArgErrorPayload();
+            return output;
+        }
         string source = input["source"].get<string>();
         string destination = input["destination"].get<string>();
         #if defined(__linux__) || defined(__APPLE__) || defined(__FreeBSD__)
@@ -318,8 +354,12 @@ namespace controllers {
         return output;
     } 
     
-    json moveFile(json input) {
+    json moveFile(const json &input) {
         json output;
+        if(!input.contains("source") || !input.contains("destination")) {
+            output["error"] = helpers::makeMissingArgErrorPayload();
+            return output;
+        }
         string source = input["source"].get<string>();
         string destination = input["destination"].get<string>();
         #if defined(__linux__) || defined(__APPLE__) || defined(__FreeBSD__)
@@ -340,8 +380,12 @@ namespace controllers {
         return output;
     } 
     
-    json getStats(json input) {
+    json getStats(const json &input) {
         json output;
+        if(!input.contains("path")) {
+            output["error"] = helpers::makeMissingArgErrorPayload();
+            return output;
+        }
         string path = input["path"].get<string>();
         fs::FileStats fileStats = fs::getStats(path);
         if(!fileStats.hasError) {
